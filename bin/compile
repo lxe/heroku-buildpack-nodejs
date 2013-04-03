@@ -107,6 +107,33 @@ function cat_npm_debug_log() {
   fi
 }
 
+# fetch pre-compiled libraries and install them into /app/vendor
+function vendor() {
+  binary="$1"
+  path="$2"
+  include="$3"
+  build_target="$BUILD_DIR/vendor/$path"
+  runtime_target="\$HOME/vendor/$path"
+
+  echo "Fetching $binary" | indent
+  mkdir -p $build_target
+  curl $binary -s -o - | tar xz -C $build_target -f -
+
+  if [ -d "$build_target/bin" ]; then
+    export PATH=$build_target/bin:$PATH
+    export RUNTIME_PATH="$runtime_target/bin:$RUNTIME_PATH"
+  fi
+
+  # $path/include may duplicate the provided include path; this was added
+  # because node-canvas looks for cairo.h and cairo-ft.h in different places
+  export CPPPATH="$build_target/include:$build_target/$include:$CPPPATH"
+  export CPATH="$build_target/include:$build_target/$include:$CPATH"
+
+  export LIBRARY_PATH="$build_target/lib:$LIBRARY_PATH"
+  export LD_LIBRARY_PATH="$runtime_target/lib:$LD_LIBRARY_PATH"
+  export PKG_CONFIG_PATH="$build_target/lib/pkgconfig:$PKG_CONFIG_PATH"
+}
+
 trap cat_npm_debug_log EXIT
 
 bootstrap_node=$(mktmpdir bootstrap_node)
@@ -174,6 +201,11 @@ INCLUDE_PATH="$VENDORED_NODE/include"
 export CPATH="$INCLUDE_PATH"
 export CPPPATH="$INCLUDE_PATH"
 
+echo "-----> Vendoring binary dependencies"
+vendor "https://s3.amazonaws.com/mojodna-heroku/freetype-2.4.11.tar.gz" "freetype" "include/freetype2"
+vendor "https://s3.amazonaws.com/mojodna-heroku/cairo-1.12.14.tar.gz" "cairo" "include/cairo"
+vendor "https://s3.amazonaws.com/mojodna-heroku/pixman-0.28.2.tar.gz" "pixman" "include/pixman-1"
+
 # install dependencies with npm
 echo "-----> Installing dependencies with npm"
 run_npm "install --production"
@@ -182,4 +214,5 @@ echo "Dependencies installed" | indent
 
 echo "-----> Building runtime environment"
 mkdir -p $BUILD_DIR/.profile.d
-echo "export PATH=\"\$HOME/bin:\$HOME/node_modules/.bin:\$PATH\"" > $BUILD_DIR/.profile.d/nodejs.sh
+echo "export PATH=\"\$HOME/bin:\$HOME/node_modules/.bin:$RUNTIME_PATH:\$PATH\"" > $BUILD_DIR/.profile.d/nodejs.sh
+echo "export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" > $BUILD_DIR/.profile.d/ld_library_path.sh

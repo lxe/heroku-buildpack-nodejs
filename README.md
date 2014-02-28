@@ -1,8 +1,34 @@
-Heroku Buildpack for Node.js
-============================
+Heroku buildpack: Node.js
+=========================
 
 This is the official [Heroku buildpack](http://devcenter.heroku.com/articles/buildpacks) for Node.js apps. If you fork this repository, please **update this README** to explain what your fork does and why it's special.
 
+Cairo Branch
+============
+
+This is mojodna's branch of bloomtime's branch of [Heroku's official node.js
+buildpack](https://github.com/heroku/heroku-buildpack-nodejs).
+
+We've added `cairo`, `pixman`, and `freetype` to the `vendor` folder so you can
+run [`node-canvas`](https://github.com/LearnBoost/node-canvas) on
+[Heroku](http://heroku.com/).
+
+Simply do `heroku config:add
+BUILDPACK_URL=git://github.com/mojodna/heroku-buildpack-nodejs.git#cairo` and
+push as normal.
+
+[vulcan issue 20](https://github.com/heroku/vulcan/issues/20) contains
+information about how to build the binaries (more or less). Cairo was built by
+hand by using `heroku run bash`, as I couldn't get `vulcan` to correctly use the
+`pixman` and `freetype` dependencies when building.  `pixman` and `freetype`
+were manually placed in `/app/vendor` and added to `CPATH`, `CPPATH`, and
+`LIBRARY_PATH`.
+
+See [Heroku's
+Devcenter](https://devcenter.heroku.com/articles/buildpack-binaries) for how to
+create your own custom buildpack.
+
+Credits: @bloomtime, @mojodna
 
 How it Works
 ------------

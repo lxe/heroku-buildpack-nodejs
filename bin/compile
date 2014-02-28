@@ -19,7 +19,7 @@ function vendor() {
   binary="$1"
   path="$2"
   include="$3"
-  build_target="$BUILD_DIR/vendor/$path"
+  build_target="$build_dir/vendor/$path"
   runtime_target="\$HOME/vendor/$path"
 
   echo "Fetching $binary" | indent
@@ -163,7 +163,7 @@ fi
 status "Building runtime environment"
 mkdir -p $build_dir/.profile.d
 echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:$RUNTIME_PATH:\$PATH\";" > $build_dir/.profile.d/nodejs.sh
-echo "export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" > $BUILD_DIR/.profile.d/ld_library_path.sh
+echo "export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\"" > $build_dir/.profile.d/ld_library_path.sh
 
 # Post package.json to nomnom service
 # Use a subshell so failures won't break the build.
